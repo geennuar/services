@@ -79,12 +79,15 @@ func (e *Image) Upload(ctx context.Context, req *img.UploadRequest, rsp *img.Upl
 	}
 
 	buf := new(bytes.Buffer)
+	mime := ""
 
 	switch {
 	case strings.HasSuffix(req.Name, ".png") || ext == "png":
 		err = png.Encode(buf, srcImage)
+		mime = "image/png"
 	case strings.HasSuffix(req.Name, ".jpg") || strings.HasSuffix(req.Url, ".jpeg") || ext == "jpg":
 		err = jpeg.Encode(buf, srcImage, nil)
+		mime = "image/jpeg"
 	default:
 		return errors.New("could not determine extension")
 	}
@@ -93,7 +96,7 @@ func (e *Image) Upload(ctx context.Context, req *img.UploadRequest, rsp *img.Upl
 		return err
 	}
 
-	err = store.DefaultBlobStore.Write(fmt.Sprintf("%v/%v/%v", pathPrefix, tenantID, req.Name), buf, store.BlobPublic(true))
+	err = store.DefaultBlobStore.Write(fmt.Sprintf("%v/%v/%v", pathPrefix, tenantID, req.Name), buf, store.BlobPublic(true), store.BlobContentType(mime))
 	if err != nil {
 		return err
 	}
@@ -186,12 +189,15 @@ func (e *Image) Resize(ctx context.Context, req *img.ResizeRequest, rsp *img.Res
 			anchor)
 	}
 	buf := new(bytes.Buffer)
+	mime := ""
 
 	switch {
 	case strings.HasSuffix(req.Name, ".png") || ext == "png":
 		err = png.Encode(buf, resultImage)
+		mime = "image/png"
 	case strings.HasSuffix(req.Name, ".jpg") || strings.HasSuffix(req.Url, ".jpeg") || ext == "jpg":
 		err = jpeg.Encode(buf, resultImage, nil)
+		mime = "image/jpeg"
 	default:
 		return errors.New("could not determine extension")
 	}
@@ -200,7 +206,7 @@ func (e *Image) Resize(ctx context.Context, req *img.ResizeRequest, rsp *img.Res
 		return err
 	}
 	if req.OutputURL {
-		err = store.DefaultBlobStore.Write(fmt.Sprintf("%v/%v/%v", pathPrefix, tenantID, req.Name), buf, store.BlobPublic(true))
+		err = store.DefaultBlobStore.Write(fmt.Sprintf("%v/%v/%v", pathPrefix, tenantID, req.Name), buf, store.BlobPublic(true), store.BlobContentType(mime))
 		if err != nil {
 			return err
 		}
